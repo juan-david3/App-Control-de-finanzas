@@ -14,8 +14,17 @@ public class ReporteControlador {
     }
 
     @GetMapping("/total")
-    public double obtenerTotalMovimientos() {
-
+    public double obtenerTotal() {
         return reporteServicio.calcularTotalMovimientos();
+    }
+
+    @GetMapping("/estado")
+    public String estado() {
+        return "Reporte funcionando";
+    }
+
+    @GetMapping("/version")
+    public String version() {
+        return "1.0";
     }
 }
