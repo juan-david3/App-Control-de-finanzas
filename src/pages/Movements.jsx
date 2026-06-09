@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import API_URL from "../services/Api";
 
 function Movements() {
 
@@ -14,7 +15,7 @@ function Movements() {
 
     const cargarMovimientos = () => {
 
-        fetch("http://localhost:8080/movimientos")
+        fetch(`${API_URL}/movimientos`)
             .then(response => response.json())
             .then(data => setMovimientos(data))
             .catch(error => console.error(error));
@@ -31,7 +32,7 @@ function Movements() {
         try {
 
             const respuesta = await fetch(
-                "http://localhost:8080/movimientos",
+                `${API_URL}/movimientos`,
                 {
                     method: "POST",
                     headers: {

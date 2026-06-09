@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import API_URL from "../services/Api";
 
 function Budgets() {
 
@@ -13,7 +14,7 @@ function Budgets() {
 
     const cargarPresupuestos = () => {
 
-        fetch("http://localhost:8080/presupuestos")
+        fetch(`${API_URL}/movimientos`)    
             .then(response => response.json())
             .then(data => setPresupuestos(data))
             .catch(error => console.error(error));
@@ -29,7 +30,7 @@ function Budgets() {
         try {
 
             const respuesta = await fetch(
-                "http://localhost:8080/presupuestos",
+                `${API_URL}/presupuestos`,
                 {
                     method: "POST",
                     headers: {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import API_URL from "../services/Api";
 
 function Users() {
 
@@ -7,16 +8,67 @@ function Users() {
     const [correo, setCorreo] = useState("");
     const [contrasena, setContrasena] = useState("");
 
-    useEffect(() => {
+    const [editando, setEditando] = useState(false);
+    const [idUsuarioEditar, setIdUsuarioEditar] = useState(null);
 
-        fetch("http://localhost:8080/usuarios")
+    const [busqueda, setBusqueda] = useState("");
+
+    const [mensaje, setMensaje] = useState("");
+    const [tipoMensaje, setTipoMensaje] = useState("");
+
+    const cargarUsuarios = () => {
+
+        fetch(`${API_URL}/usuarios`)
             .then(response => response.json())
             .then(data => setUsers(data))
             .catch(error => console.error(error));
+    };
+
+    useEffect(() => {
+
+        cargarUsuarios();
 
     }, []);
 
+    const validarCorreo = (correo) => {
+
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        return regex.test(correo);
+    };
+
+    const mostrarMensaje = (texto, tipo) => {
+
+        setMensaje(texto);
+        setTipoMensaje(tipo);
+
+        setTimeout(() => {
+            setMensaje("");
+            setTipoMensaje("");
+        }, 3000);
+    };
+
     const guardarUsuario = async () => {
+
+        if (!nombre.trim()) {
+            mostrarMensaje("Debe ingresar el nombre", "danger");
+            return;
+        }
+
+        if (!correo.trim()) {
+            mostrarMensaje("Debe ingresar el correo", "danger");
+            return;
+        }
+
+        if (!validarCorreo(correo)) {
+            mostrarMensaje("Debe ingresar un correo válido", "danger");
+            return;
+        }
+
+        if (!contrasena.trim()) {
+            mostrarMensaje("Debe ingresar la contraseña", "danger");
+            return;
+        }
 
         const nuevoUsuario = {
             nombre,
@@ -27,7 +79,7 @@ function Users() {
         try {
 
             const respuesta = await fetch(
-                "http://localhost:8080/usuarios",
+                `${API_URL}/usuarios`,
                 {
                     method: "POST",
                     headers: {
@@ -39,32 +91,204 @@ function Users() {
 
             if (respuesta.ok) {
 
-                alert("Usuario guardado correctamente");
+                mostrarMensaje(
+                    "Usuario guardado correctamente",
+                    "success"
+                );
 
-                window.location.reload();
+                limpiarFormulario();
+
+                cargarUsuarios();
             }
 
         } catch (error) {
 
             console.error(error);
+
+            mostrarMensaje(
+                "Error al guardar usuario",
+                "danger"
+            );
         }
     };
+
+    const editarUsuario = (user) => {
+
+        setIdUsuarioEditar(user.idUsuario);
+
+        setNombre(user.nombre);
+        setCorreo(user.correo);
+
+        setContrasena("");
+
+        setEditando(true);
+    };
+
+    const actualizarUsuario = async () => {
+
+        if (!nombre.trim()) {
+            mostrarMensaje("Debe ingresar el nombre", "danger");
+            return;
+        }
+
+        if (!correo.trim()) {
+            mostrarMensaje("Debe ingresar el correo", "danger");
+            return;
+        }
+
+        if (!validarCorreo(correo)) {
+            mostrarMensaje("Debe ingresar un correo válido", "danger");
+            return;
+        }
+
+        const usuarioActualizado = {
+            nombre,
+            correo,
+            contrasena
+        };
+
+        try {
+
+            const respuesta = await fetch(
+                `${API_URL}/usuarios/${idUsuarioEditar}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(usuarioActualizado)
+                }
+            );
+
+            if (respuesta.ok) {
+
+                mostrarMensaje(
+                    "Usuario actualizado correctamente",
+                    "warning"
+                );
+
+                cancelarEdicion();
+
+                cargarUsuarios();
+            }
+
+        } catch (error) {
+
+            console.error(error);
+
+            mostrarMensaje(
+                "Error al actualizar usuario",
+                "danger"
+            );
+        }
+    };
+
+    const eliminarUsuario = async (id) => {
+
+        const confirmar = window.confirm(
+            "¿Desea eliminar este usuario?"
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        try {
+
+            const respuesta = await fetch(
+                `${API_URL}/usuarios/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+            if (respuesta.ok) {
+
+                mostrarMensaje(
+                    "Usuario eliminado correctamente",
+                    "danger"
+                );
+
+                cargarUsuarios();
+            }
+
+        } catch (error) {
+
+            console.error(error);
+
+            mostrarMensaje(
+                "Error al eliminar usuario",
+                "danger"
+            );
+        }
+    };
+
+    const limpiarFormulario = () => {
+
+        setNombre("");
+        setCorreo("");
+        setContrasena("");
+    };
+
+    const cancelarEdicion = () => {
+
+        setEditando(false);
+        setIdUsuarioEditar(null);
+
+        limpiarFormulario();
+    };
+
+    const usuariosFiltrados = [...users]
+        .sort((a, b) => b.idUsuario - a.idUsuario)
+        .filter(
+            (user) =>
+                user.nombre
+                    .toLowerCase()
+                    .includes(busqueda.toLowerCase()) ||
+                user.correo
+                    .toLowerCase()
+                    .includes(busqueda.toLowerCase())
+        );
 
     return (
         <div className="container mt-4">
 
-            <h2>Users</h2>
+            <h2 className="mb-3">
+                👤 User Management
+            </h2>
 
-            <div className="card p-3 mb-3">
+            {
+                mensaje && (
+                    <div
+                        className={`alert alert-${tipoMensaje}`}
+                    >
+                        {mensaje}
+                    </div>
+                )
+            }
 
-                <h4>Create User</h4>
+            <p className="text-muted">
+                Total users: {users.length}
+            </p>
+
+            <div className="card shadow p-4 mb-4">
+
+                <h4>
+                    {
+                        editando
+                            ? "Edit User"
+                            : "Create User"
+                    }
+                </h4>
 
                 <input
                     type="text"
                     className="form-control mb-2"
                     placeholder="Name"
                     value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
+                    onChange={(e) =>
+                        setNombre(e.target.value)
+                    }
                 />
 
                 <input
@@ -72,45 +296,122 @@ function Users() {
                     className="form-control mb-2"
                     placeholder="Email"
                     value={correo}
-                    onChange={(e) => setCorreo(e.target.value)}
+                    onChange={(e) =>
+                        setCorreo(e.target.value)
+                    }
                 />
 
                 <input
                     type="password"
-                    className="form-control mb-2"
+                    className="form-control mb-3"
                     placeholder="Password"
                     value={contrasena}
-                    onChange={(e) => setContrasena(e.target.value)}
+                    onChange={(e) =>
+                        setContrasena(e.target.value)
+                    }
                 />
 
-                <button
-                    className="btn btn-primary"
-                    onClick={guardarUsuario}
-                >
-                    Save User
-                </button>
+                <div className="d-flex gap-2">
+
+                    <button
+                        className="btn btn-primary"
+                        onClick={
+                            editando
+                                ? actualizarUsuario
+                                : guardarUsuario
+                        }
+                    >
+                        {
+                            editando
+                                ? "Update User"
+                                : "Save User"
+                        }
+                    </button>
+
+                    <button
+                        className="btn btn-outline-secondary"
+                        onClick={limpiarFormulario}
+                    >
+                        Clear
+                    </button>
+
+                    {
+                        editando && (
+                            <button
+                                className="btn btn-secondary"
+                                onClick={cancelarEdicion}
+                            >
+                                Cancel
+                            </button>
+                        )
+                    }
+
+                </div>
 
             </div>
 
-            <table className="table table-bordered">
+            <input
+                type="text"
+                className="form-control mb-3"
+                placeholder="🔍 Search user..."
+                value={busqueda}
+                onChange={(e) =>
+                    setBusqueda(e.target.value)
+                }
+            />
 
-                <thead>
+            <table className="table table-striped table-hover">
+
+                <thead className="table-dark">
+
                     <tr>
                         <th>ID</th>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Actions</th>
                     </tr>
+
                 </thead>
 
                 <tbody>
 
-                    {users.map(user => (
-                        <tr key={user.idUsuario}>
-                            <td>{user.idUsuario}</td>
-                            <td>{user.nombre}</td>
-                            <td>{user.correo}</td>
-                        </tr>
-                    ))}
+                    {
+                        usuariosFiltrados.map((user) => (
+
+                            <tr key={user.idUsuario}>
+
+                                <td>{user.idUsuario}</td>
+                                <td>{user.nombre}</td>
+                                <td>{user.correo}</td>
+
+                                <td>
+
+                                    <button
+                                        className="btn btn-warning btn-sm me-2"
+                                        onClick={() =>
+                                            editarUsuario(user)
+                                        }
+                                    >
+                                        Edit
+                                    </button>
+
+                                    <button
+                                        className="btn btn-danger btn-sm"
+                                        onClick={() =>
+                                            eliminarUsuario(
+                                                user.idUsuario
+                                            )
+                                        }
+                                    >
+                                        Delete
+                                    </button>
+
+                                </td>
+
+                            </tr>
+
+                        ))
+                    }
 
                 </tbody>
 

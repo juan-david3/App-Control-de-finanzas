@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import API_URL from "../services/Api";
 
 function Categories() {
 
@@ -15,7 +16,7 @@ function Categories() {
 
     const cargarCategorias = () => {
 
-        fetch("http://localhost:8080/categorias")
+        fetch(`${API_URL}/categorias`)
             .then(response => response.json())
             .then(data => setCategorias(data))
             .catch(error => console.error(error));
@@ -31,7 +32,7 @@ function Categories() {
         try {
 
             const respuesta = await fetch(
-                "http://localhost:8080/categorias",
+                `${API_URL}/categorias`,
                 {
                     method: "POST",
                     headers: {
