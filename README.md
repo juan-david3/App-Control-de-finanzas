@@ -4,8 +4,7 @@
 
 # App-Control-de-finanas
 Aplicación sencilla para control de ingresos y gastos.
->>>>>>> b36a2b5a1a58743c76ff84c9c6af97f6b034dab1
-=======
+
 # App Control de Finanzas
 
 Aplicación de control financiero desarrollada con:
